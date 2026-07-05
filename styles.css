@@ -116,7 +116,8 @@ p{
 .hero-card,
 .feature-card,
 .quiz-card,
-.content-card{
+.content-card,
+.sim-card{
   background:rgba(255,255,255,.04);
   border:1px solid rgba(255,255,255,.08);
   border-radius:22px;
@@ -211,6 +212,40 @@ p{
   outline:none;
 }
 
+.sim-link{
+  display:inline-block;
+  margin-top:14px;
+  padding:12px 18px;
+  border-radius:14px;
+  font-weight:700;
+  background:#38bdf8;
+  color:#06111f;
+}
+
+.sim-link:hover{
+  filter:brightness(1.05);
+}
+
+.sim-page{
+  min-height:100vh;
+  padding:28px 0 60px;
+}
+
+.sim-hero{
+  margin-bottom:22px;
+}
+
+.sim-grid{
+  display:grid;
+  grid-template-columns:1.2fr .8fr;
+  gap:18px;
+}
+
+.sim-note{
+  color:#cbd5e1;
+  font-size:1rem;
+}
+
 .footer{
   text-align:center;
   padding:24px;
@@ -221,7 +256,8 @@ p{
 
 @media (max-width:900px){
   .hero-grid,
-  .grid-3{
+  .grid-3,
+  .sim-grid{
     grid-template-columns:1fr;
   }
 
@@ -279,7 +315,8 @@ p{
 
   .feature-card,
   .content-card,
-  .quiz-card{
+  .quiz-card,
+  .sim-card{
     border-radius:18px;
   }
 
@@ -328,5 +365,16 @@ p{
     padding:7px 12px;
   }
 
-  .hero-text,
-  .sec
+  .hero-text{
+    width:100%;
+  }
+
+  .sim-page{
+    padding:20px 0 50px;
+  }
+
+  .sim-link{
+    width:100%;
+    text-align:center;
+  }
+}
