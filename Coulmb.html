@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>محاكاة قوة التجاذب بين الشحنات</title>
+<style>
+:root{--bg:#081120;--panel:#0f1a33;--text:#e8eefc;--muted:#9fb0d0;--accent:#62d2ff}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;background:radial-gradient(circle at top,#122244 0%,var(--bg) 55%);color:var(--text);min-height:100vh}
+.wrap{max-width:1200px;margin:auto;padding:24px}
+.hero{display:grid;grid-template-columns:1.2fr .8fr;gap:18px;align-items:stretch}
+.card{background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.08);border-radius:22px;box-shadow:0 20px 50px rgba(0,0,0,.25);overflow:hidden}
+.head{padding:24px 24px 8px}
+h1{margin:0 0 8px;font-size:clamp(28px,4vw,44px)}
+p{margin:0;color:var(--muted);line-height:1.8}
+.panel{padding:20px 24px 24px}
+.controls{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px}
+.control{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:14px}
+.control label{display:flex;justify-content:space-between;gap:12px;font-size:14px;margin-bottom:10px;color:#dce7ff}
+input[type=range]{width:100%}
+.value{color:var(--accent);font-weight:700}
+.sim{padding:18px;display:flex;flex-direction:column;gap:14px}
+.canvas{position:relative;height:520px;border-radius:22px;background:linear-gradient(180deg,#0e1730,#09101f);border:1px solid rgba(255,255,255,.08);overflow:hidden}
+.grid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.05) 1px, transparent 1px),linear-gradient(90deg,rgba(255,255,255,.05) 1px, transparent 1px);background-size:40px 40px;opacity:.35}
+.charge{position:absolute;width:92px;height:92px;border-radius:50%;display:grid;place-items:center;font-size:40px;font-weight:800;user-select:none;cursor:grab;transform:translate(-50%,-50%);box-shadow:0 0 0 12px rgba(255,255,255,.02),0 16px 30px rgba(0,0,0,.35);z-index:10}
+.charge:active{cursor:grabbing}
+.pos{background:radial-gradient(circle at 30% 30%,#ffe8a8,#ffae42 55%,#fb7d00 100%);color:#2a1400}
+.neg{background:radial-gradient(circle at 30% 30%,#d8e7ff,#77a7ff 55%,#2b63ff 100%);color:#061128}
+.label{position:absolute;top:100%;left:50%;transform:translateX(-50%);margin-top:8px;font-size:13px;color:#dbe7ff;white-space:nowrap}
+.arrow{position:absolute;transform-origin:left center;height:8px;background:var(--accent);border-radius:999px;filter:drop-shadow(0 0 8px rgba(98,210,255,.65))}
+.arrow::after{content:'';position:absolute;right:-1px;top:50%;transform:translateY(-50%);border-left:14px solid var(--accent);border-top:10px solid transparent;border-bottom:10px solid transparent}
+.arrow.left::after{right:auto;left:-1px;border-left:none;border-right:14px solid var(--accent)}
+.forceInfo{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.stat{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:14px}
+.stat .k{font-size:13px;color:var(--muted)}
+.stat .v{font-size:22px;font-weight:800;margin-top:6px}
+.status{padding:14px 18px;border-radius:16px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);color:#f5fbff}
+.footer{color:var(--muted);font-size:13px;padding:10px 2px 0}
+@media (max-width:920px){.hero{grid-template-columns:1fr}.controls,.forceInfo{grid-template-columns:1fr}.canvas{height:430px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <section class="card">
+      <div class="head">
+        <h1>محاكاة قوة التجاذب بين الشحنات</h1>
+        <p>حرّك الشحنات وشاهد كيف تتغير القوة وفق قانون كولوم. الشحنات المختلفة تتجاذب، والمتشابهة تتنافر، وتضعف القوة مع زيادة المسافة.</p>
+      </div>
+      <div class="panel">
+        <div class="controls">
+          <div class="control">
+            <label><span>شحنة A</span><span class="value" id="q1Val">+3 μC</span></label>
+            <input id="q1" type="range" min="-10" max="10" step="1" value="3" />
+          </div>
+          <div class="control">
+            <label><span>شحنة B</span><span class="value" id="q2Val">-3 μC</span></label>
+            <input id="q2" type="range" min="-10" max="10" step="1" value="-3" />
+          </div>
+          <div class="control">
+            <label><span>الوضوح</span><span class="value" id="scaleVal">1.0x</span></label>
+            <input id="scale" type="range" min="0.4" max="2.0" step="0.1" value="1" />
+          </div>
+          <div class="control">
+            <label><span>ثبات الشحنات</span><span class="value" id="freezeVal">تحريك</span></label>
+            <input id="freeze" type="range" min="0" max="1" step="1" value="0" />
+          </div>
+        </div>
+      </div>
+    </section>
+    <aside class="card sim">
+      <div class="canvas" id="canvas">
+        <div class="grid"></div>
+        <div class="charge pos" id="c1" style="left:28%;top:50%;"><span>+</span><div class="label" id="c1Label">A</div></div>
+        <div class="charge neg" id="c2" style="left:72%;top:50%;"><span>-</span><div class="label" id="c2Label">B</div></div>
+        <div class="arrow" id="arrow"></div>
+      </div>
+      <div class="forceInfo">
+        <div class="stat"><div class="k">المسافة</div><div class="v" id="distVal">4.00 m</div></div>
+        <div class="stat"><div class="k">القوة</div><div class="v" id="forceVal">0.00 N</div></div>
+        <div class="stat"><div class="k">الحالة</div><div class="v" id="modeVal">تجاذب</div></div>
+      </div>
+      <div class="status" id="status">ضع شحنتين مختلفتي الإشارة لمشاهدة التجاذب بوضوح.</div>
+    </aside>
+  </div>
+  <div class="footer">قانون كولوم: F = k |q1 q2| / r²</div>
+</div>
+<script>
+const k = 8.99e9;
+const q1 = document.getElementById('q1');
+const q2 = document.getElementById('q2');
+const scale = document.getElementById('scale');
+const freeze = document.getElementById('freeze');
+const c1 = document.getElementById('c1');
+const c2 = document.getElementById('c2');
+const canvas = document.getElementById('canvas');
+const arrow = document.getElementById('arrow');
+const q1Val = document.getElementById('q1Val');
+const q2Val = document.getElementById('q2Val');
+const scaleVal = document.getElementById('scaleVal');
+const freezeVal = document.getElementById('freezeVal');
+const distVal = document.getElementById('distVal');
+const forceVal = document.getElementById('forceVal');
+const modeVal = document.getElementById('modeVal');
+const status = document.getElementById('status');
+const c1Label = document.getElementById('c1Label');
+const c2Label = document.getElementById('c2Label');
+let dragging = null, offsetX = 0, offsetY = 0;
+let p1 = {x: 0.28, y: 0.5};
+let p2 = {x: 0.72, y: 0.5};
+function setChargeVisual(el, val, labelEl, text){
+  el.classList.remove('pos','neg');
+  if(val > 0){ el.classList.add('pos'); el.innerHTML = '<span>+</span>'; }
+  else if(val < 0){ el.classList.add('neg'); el.innerHTML = '<span>-</span>'; }
+  else { el.classList.add('neg'); el.style.opacity = 0.55; el.innerHTML = '<span>0</span>'; }
+  el.appendChild(labelEl);
+  labelEl.textContent = text;
+}
+function clamp(v,min,max){ return Math.max(min, Math.min(max, v)); }
+function updatePositions(){
+  const rect = canvas.getBoundingClientRect();
+  c1.style.left = (p1.x * rect.width) + 'px';
+  c1.style.top = (p1.y * rect.height) + 'px';
+  c2.style.left = (p2.x * rect.width) + 'px';
+  c2.style.top = (p2.y * rect.height) + 'px';
+}
+function update(){
+  const v1 = Number(q1.value), v2 = Number(q2.value), sc = Number(scale.value);
+  q1Val.textContent = `${v1 > 0 ? '+' : ''}${v1} μC`;
+  q2Val.textContent = `${v2 > 0 ? '+' : ''}${v2} μC`;
+  scaleVal.textContent = `${sc.toFixed(1)}x`;
+  freezeVal.textContent = freeze.value === '1' ? 'تثبيت' : 'تحريك';
+  setChargeVisual(c1, v1, c1Label, 'A');
+  setChargeVisual(c2, v2, c2Label, 'B');
+  const rect = canvas.getBoundingClientRect();
+  const x1 = p1.x * rect.width, y1 = p1.y * rect.height;
+  const x2 = p2.x * rect.width, y2 = p2.y * rect.height;
+  const dx = x2 - x1, dy = y2 - y1;
+  const distPx = Math.max(Math.hypot(dx, dy), 40);
+  const distM = distPx / (110 * sc);
+  const q1c = v1 * 1e-6, q2c = v2 * 1e-6;
+  const force = k * Math.abs(q1c * q2c) / (distM * distM || 1e-6);
+  const attraction = v1 * v2 < 0;
+  const mode = attraction ? 'تجاذب' : (v1 * v2 > 0 ? 'تنافر' : 'لا توجد قوة');
+  distVal.textContent = `${distM.toFixed(2)} m`;
+  forceVal.textContent = `${force.toFixed(2)} N`;
+  modeVal.textContent = mode;
+  status.textContent = attraction ? 'الشحنتان مختلفتا الإشارة، لذلك القوة بينهما تجاذب.' : (v1 * v2 > 0 ? 'الشحنتان متماثلتان في الإشارة، لذلك القوة بينهما تنافر.' : 'إذا كانت إحدى الشحنتين صفرًا، فلا تظهر قوة كهربائية بينهما.');
+  const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+  arrow.style.width = Math.max(50, Math.min(260, force / 120)) + 'px';
+  arrow.style.left = x1 + 'px';
+  arrow.style.top = y1 + 'px';
+  arrow.style.transform = `rotate(${angle}deg)`;
+  arrow.classList.toggle('left', dx < 0);
+  arrow.style.opacity = Math.min(1, 0.25 + force / 80);
+}
+function onDown(e, el){
+  if(freeze.value === '1') return;
+  dragging = el;
+  const rect = canvas.getBoundingClientRect();
+  const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+  const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
+  const p = el === c1 ? p1 : p2;
+  offsetX = x - p.x * rect.width;
+  offsetY = y - p.y * rect.height;
+  el.style.zIndex = 20;
+}
+function onMove(e){
+  if(!dragging) return;
+  const rect = canvas.getBoundingClientRect();
+  const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+  const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
+  const nx = clamp((x - offsetX) / rect.width, 0.08, 0.92);
+  const ny = clamp((y - offsetY) / rect.height, 0.12, 0.88);
+  if(dragging === c1) p1 = {x:nx, y:ny}; else p2 = {x:nx, y:ny};
+  updatePositions();
+  update();
+}
+function onUp(){
+  if(dragging) dragging.style.zIndex = 10;
+  dragging = null;
+}
+q1.addEventListener('input', update);
+q2.addEventListener('input', update);
+scale.addEventListener('input', update);
+freeze.addEventListener('input', update);
+c1.addEventListener('mousedown', e => onDown(e, c1));
+c2.addEventListener('mousedown', e => onDown(e, c2));
+window.addEventListener('mousemove', onMove);
+window.addEventListener('mouseup', onUp);
+c1.addEventListener('touchstart', e => onDown(e, c1), {passive:true});
+c2.addEventListener('touchstart', e => onDown(e, c2), {passive:true});
+window.addEventListener('touchmove', onMove, {passive:true});
+window.addEventListener('touchend', onUp);
+window.addEventListener('resize', () => { updatePositions(); update(); });
+updatePositions();
+update();
+</script>
+</body>
+</html>
